@@ -2,6 +2,7 @@
 #define ROUTINGPROTOCOLIMPL_H
 
 #include "RoutingProtocol.h"
+#include <unordered_map>
 
 class RoutingProtocolImpl : public RoutingProtocol {
   public:
@@ -37,6 +38,15 @@ class RoutingProtocolImpl : public RoutingProtocol {
 
  private:
     Node *sys; // To store Node object; used to access GSR9999 interfaces 
+    unsigned short router_id;
+    unsigned short num_ports;
+    eProtocolType protocol_type;
+    // Port number, Route ID
+    std::unordered_map<unsigned short, unsigned short> port_status;
+    // 
+    std::unordered_map<unsigned short, unsigned short> dv_port_routing;
+    // 
+    std::unordered_map<unsigned short, unsigned short> ls_port_routing;
 };
 
 #endif
