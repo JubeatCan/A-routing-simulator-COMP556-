@@ -41,8 +41,9 @@ class RoutingProtocolImpl : public RoutingProtocol {
     unsigned short router_id;
     unsigned short num_ports;
     eProtocolType protocol_type;
-    // Port number, Route ID
-    std::unordered_map<unsigned short, unsigned short> port_status;
+
+    // pair<Router ID, cost> vector, index is the port id
+    vector< pair<unsigned short, unsigned short> > port_status;
     // 
     std::unordered_map<unsigned short, unsigned short> dv_port_routing;
     // 
