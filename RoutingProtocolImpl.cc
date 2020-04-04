@@ -160,11 +160,16 @@ void RoutingProtocolImpl::recvPongPacket(u_short port, char * packet, u_short si
     port_table[neighbor_id].TTL = PORT_ENTRY_LIVE;
 
     // TODO: update DV/LS structure if necessary
-
+    if (protocol_type == P_DV) {
+        dv.update_DV_table_new_neighborcost(neighbor_id, prev, cost);
+    } else if (protocol_type == P_LS) {
+        // TODO: LS
+    }
 }
 
 void recvDVPacket(u_short port, char * packet, u_short size) {
     // TODO
+    
 }
 
 void recvLSPacket(u_short port, char * packet, u_short size) {
@@ -187,7 +192,23 @@ void RoutingProtocolImpl::sendPingToAllPorts() {
 void RoutingProtocolImpl::checkTableEntries() {
     // TODO: decrease TTL for each entry by 1, if TTL == 0, remove that entry
     // TODO: unpdate DV/LS table if necessary
+    std::unordered_map <unsigned short, port_table_entry>::iterator it = port_table.begin();
+    while (it != port_table.end()) {
+        it->second.TTL--;
 
+        // if TTL is 0 now.
+        if (it->second.TTL == 0) {
+            // Update our DV first.
+            dv.update_DV_table_new_neighborcost(it->first, it->second.cost, INFINITY_COST);
+            // Then remove this entry.
+            it = port_table.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    // DV TTL Update
+    dv.update_DV_ttl();
 
 }
 

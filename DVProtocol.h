@@ -3,6 +3,8 @@
 
 #include <unordered_map>
 
+#define DV_TTL 45
+
 struct DV_table_entry {
   unsigned short cost;      // minimun cost to reach that router
   unsigned short next_hop;  // next hop used to reach that router
@@ -19,7 +21,8 @@ public:
     ~DVProtocol() {}
 
 
-    bool update_DV_table();
+    bool update_DV_table_new_neighborcost(u_short neighbor_id, u_short prev, u_short cost);
+    void update_DV_ttl();
 
     // store the router_id for itself
     unsigned short router_id;
