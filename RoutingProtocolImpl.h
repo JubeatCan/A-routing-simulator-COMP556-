@@ -71,6 +71,7 @@ class RoutingProtocolImpl : public RoutingProtocol {
     unsigned short num_ports;
     eProtocolType protocol_type;
 
+    // right now I put all entires check into one alarm, can be different events, will see how impl goes
     // eAlarmType alarm_port_entry_check;
     // eAlarmType alarm_dv_entry_check;
     // eAlarmType alarm_ls_entry_check;
@@ -89,8 +90,7 @@ class RoutingProtocolImpl : public RoutingProtocol {
     std::unordered_map <unsigned short, DV_table_entry> DV_table;
 
     // forwarding table: key = router_id/dest_id, value = port_id
-    std::unordered_map <unsigned short, unsigned short> forwarding_table;
-
+    // move into DVProtocol or LSProtocol, since unpdate in DV_Table will affect forwarding table immediately
 
     /* helper functions to deal with different alarm_type and packet_type */
 
