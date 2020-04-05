@@ -167,12 +167,32 @@ void RoutingProtocolImpl::recvPongPacket(u_short port, char * packet, u_short si
     }
 }
 
-void recvDVPacket(u_short port, char * packet, u_short size) {
+void RoutingProtocolImpl::recvDVPacket(u_short port, char * packet, u_short size) {
     // TODO
-    
+    u_short fromId = ntohs(*(u_short *)(packet + 4));
+    vector<pair<u_short, u_short>> destCostPair;
+    for (int i = 0; i < (size-8)/4; i++) {
+        destCostPair.push_back(make_pair((ntohs(*(u_short *)(packet + 8 + i*4))), 
+                        (ntohs(*(u_short *)(packet + 8 + i*4 + 2)))));
+    }
+
+    for (auto& p : destCostPair) {
+        if (p.first == router_id) {
+            continue;
+        }
+
+        if (dv.DV_table.find(p.first) == dv.DV_table.end()) {
+            dv.update_DV_table_pack(p.first, fromId, dv.DV_table[fromId].cost + p.second);
+        } else {
+            if (dv.DV_table[p.first].cost > dv.DV_table[fromId].cost + p.second) {
+                dv.update_DV_table_pack(p.first, fromId, dv.DV_table[fromId].cost + p.second);
+            }
+        }
+    }
+
 }
 
-void recvLSPacket(u_short port, char * packet, u_short size) {
+void RoutingProtocolImpl::recvLSPacket(u_short port, char * packet, u_short size) {
     // TODO
 }
 

@@ -54,4 +54,12 @@ void DVProtocol::update_DV_ttl() {
     }
 }
 
+void DVProtocol::update_DV_table_pack(u_short dest, u_short next, u_short cost) {
+    DV_table[dest].cost = cost;
+    DV_table[dest].next_hop = next;
+    DV_table[dest].TTL = DV_TTL;
+
+    forwarding_table[dest] = next;
+}
+
 #endif
