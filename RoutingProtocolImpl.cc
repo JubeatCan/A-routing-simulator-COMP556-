@@ -22,7 +22,8 @@ void RoutingProtocolImpl::init(unsigned short num_ports, unsigned short router_i
     ping_pong_exchange = ALARM_PING_PONG_EXCHANGE;
     dv_update = ALARM_DV_UPDATE;
     ls_update = ALARM_LS_UPDATE;
-    
+
+    print_tables = PRINT;
     sendPingToAllPorts();
 
     sys->set_alarm(this, CHECK_ENTRY_FREQ, &check_entry);
@@ -36,6 +37,8 @@ void RoutingProtocolImpl::init(unsigned short num_ports, unsigned short router_i
     else if (protocol_type == P_LS) {
         // TODO: add LS protocol later
     }
+
+    sys->set_alarm(this, 10000, &print_tables);
 
 }
 
@@ -68,6 +71,11 @@ void RoutingProtocolImpl::handle_alarm(void *data) {
             sys->set_alarm(this, UPDATE_FREQ, data);
             break;
         
+        case PRINT:
+            printTables();
+            sys->set_alarm(this, 10000, data);
+            break;
+            
         default:
             break;
     }
@@ -329,4 +337,16 @@ void RoutingProtocolImpl::sendDVEntriesToNeighbors() {
 
 void RoutingProtocolImpl::sendLSEntriesToNeighbors() {
     // TODO
+}
+
+void RoutingProtocolImpl::printTables() {
+    for(auto & it: port_table) {
+        std::cout<< "PT: " << it.first << ": " << it.second.cost << std::endl;
+    }
+
+    for (auto & it: dv.DV_table) {
+        std::cout<< "DV: " << it.first << ": " << it.second.next_hop << ", "<< it.second.cost << std::endl;
+        
+    }
+
 }
