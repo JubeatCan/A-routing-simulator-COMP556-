@@ -1,6 +1,7 @@
 #include "RoutingProtocolImpl.h"
 #include "Node.h"
 #include <arpa/inet.h>
+#include <set>
 
 
 RoutingProtocolImpl::RoutingProtocolImpl(Node *n) : RoutingProtocol(n) {
@@ -173,9 +174,9 @@ void RoutingProtocolImpl::recvDVPacket(u_short port, char * packet, u_short size
     // TODO
     bool flag = false;
     u_short fromId = ntohs(*(u_short *)(packet + 4));
-    if (dv.DV_table.find(fromId) == dv.DV_table.end()) {
-        return;
-    }
+    // if (dv.DV_table.find(fromId) == dv.DV_table.end()) {
+    //     return;
+    // }
     unordered_map<u_short, u_short> destCostPair;
     for (int i = 0; i < (size-8)/4; i++) {
         destCostPair[(ntohs(*(u_short *)(packet + 8 + i*4)))] =  
@@ -198,14 +199,24 @@ void RoutingProtocolImpl::recvDVPacket(u_short port, char * packet, u_short size
         }
     }
     
+
     auto it = dv.DV_table.begin();
+    set<int> destErase;
     while (it != dv.DV_table.end()) {
         if (it->second.next_hop == fromId && destCostPair.find(it->first) == destCostPair.end() && it->first != fromId) {
             dv.forwarding_table.erase(it->first);
+            destErase.insert(it->first);
             it = dv.DV_table.erase(it);
             flag = true;
         } else {
             ++it;
+        }
+    }
+
+    for (int i : destErase) {
+        if (port_table.find(i) != port_table.end()) {
+            dv.update_DV_table_pack(i, i, port_table[i].cost);
+            flag = true;
         }
     }
 
