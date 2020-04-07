@@ -185,7 +185,7 @@ void RoutingProtocolImpl::recvDVPacket(u_short port, char * packet, u_short size
         }
 
         if (dv.DV_table.find(p.first) == dv.DV_table.end()) {
-            flag = dv.update_DV_table_pack(p.first, fromId, dv.DV_table[fromId].cost + p.second);
+            flag = (dv.update_DV_table_pack(p.first, fromId, dv.DV_table[fromId].cost + p.second));
         } else {
             if (dv.DV_table[p.first].cost > dv.DV_table[fromId].cost + p.second) {
                 flag = dv.update_DV_table_pack(p.first, fromId, dv.DV_table[fromId].cost + p.second);
@@ -232,7 +232,12 @@ void RoutingProtocolImpl::checkTableEntries() {
         // if TTL is 0 now.
         if (it->second.TTL == 0) {
             // Update our DV first.
-            flag = dv.update_DV_table_new_neighborcost(it->first, it->second.cost, INFINITY_COST);
+            // flag = dv.update_DV_table_new_neighborcost(it->first, it->second.cost, INFINITY_COST);
+            if (flag) {
+                dv.update_DV_table_new_neighborcost(it->first, it->second.cost, INFINITY_COST);
+            } else {
+                flag = dv.update_DV_table_new_neighborcost(it->first, it->second.cost, INFINITY_COST);
+            }
             // Then remove this entry.
             it = port_table.erase(it);
         } else {
@@ -241,7 +246,12 @@ void RoutingProtocolImpl::checkTableEntries() {
     }
 
     // DV TTL Update
-    flag = (dv.update_DV_ttl() || flag);
+    // flag = (dv.update_DV_ttl() || flag);
+    if (flag) {
+        dv.update_DV_ttl();
+    } else {
+        flag = dv.update_DV_ttl();
+    }
 
     if (flag) {
         sendDVEntriesToNeighbors();
