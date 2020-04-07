@@ -58,6 +58,7 @@ bool DVProtocol::update_DV_ttl() {
             ++it;
         }
     }
+
     return flag;
 }
 
