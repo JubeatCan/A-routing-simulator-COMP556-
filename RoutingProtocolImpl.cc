@@ -181,6 +181,9 @@ void RoutingProtocolImpl::recvDVPacket(u_short port, char * packet, u_short size
     // TODO
     bool flag = false;
     u_short fromId = ntohs(*(u_short *)(packet + 4));
+    if (dv.DV_table.find(fromId) == dv.DV_table.end()) {
+        return;
+    }
     unordered_map<u_short, u_short> destCostPair;
     for (int i = 0; i < (size-8)/4; i++) {
         destCostPair[(ntohs(*(u_short *)(packet + 8 + i*4)))] =  
@@ -217,6 +220,7 @@ void RoutingProtocolImpl::recvDVPacket(u_short port, char * packet, u_short size
     auto it2 = dv.DV_table.begin();
     while (it2 != dv.DV_table.end()) {
         it2->second.TTL = DV_TTL;
+        cout << it2->first << "DV: " << it2->second.cost << " " << it2->second.next_hop << endl;
         ++it2;
     }
 
