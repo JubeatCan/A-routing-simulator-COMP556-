@@ -182,8 +182,8 @@ void RoutingProtocolImpl::recvDVPacket(u_short port, char * packet, u_short size
     auto it = dv.DV_table.begin();
     while (it != dv.DV_table.end()) {
         if (it->second.next_hop == fromId && destCostPair.find(it->first) == destCostPair.end()) {
-            it = dv.DV_table.erase(it);
             dv.forwarding_table.erase(it->first);
+            it = dv.DV_table.erase(it);
         } else {
             ++it;
         }
