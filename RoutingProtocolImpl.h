@@ -22,7 +22,8 @@ enum eAlarmType {
     ALARM_CHECK_ENTRY,
     ALARM_PING_PONG_EXCHANGE,
     ALARM_DV_UPDATE,
-    ALARM_LS_UPDATE
+    ALARM_LS_UPDATE,
+    PRINT,
 };
 
 struct port_table_entry {
@@ -80,6 +81,8 @@ class RoutingProtocolImpl : public RoutingProtocol {
     eAlarmType dv_update;
     eAlarmType ls_update;
 
+    eAlarmType print_tables;
+
     DVProtocol dv;
     // TODO: add LS protocol later
 
@@ -121,6 +124,8 @@ class RoutingProtocolImpl : public RoutingProtocol {
     // send all LS entries to all neighbors
     void sendLSEntriesToNeighbors();
 
+
+    void printTables();
 };
 
 #endif

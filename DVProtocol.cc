@@ -6,6 +6,10 @@
 #include <iostream>
 
 bool DVProtocol::update_DV_table_new_neighborcost(u_short neighbor_id, u_short prev, u_short cost) {
+    std::cout<< router_id << ": "<< neighbor_id << "; " << prev << "; "<< cost << std::endl;
+    for (auto &it: DV_table) {
+        std::cout<< it.first << " DV: " << it.second.cost<< std::endl;
+    }
     u_short infcost = 0xffff;
     bool flag = false;
     if (DV_table.find(neighbor_id) == DV_table.end()) {
@@ -43,7 +47,7 @@ bool DVProtocol::update_DV_table_new_neighborcost(u_short neighbor_id, u_short p
     }
     
     for (auto& it:forwarding_table) {
-        std::cout << it.first << " " << it.second << std::endl;
+        std::cout << router_id << "FT: " << it.first << " " << it.second << std::endl;
     }
     std::cout << std::endl;
 
