@@ -200,6 +200,7 @@ void RoutingProtocolImpl::recvDVPacket(u_short port, char * packet, u_short size
         if (it->second.next_hop == fromId && destCostPair.find(it->first) == destCostPair.end() && it->first != fromId) {
             dv.forwarding_table.erase(it->first);
             it = dv.DV_table.erase(it);
+            flag = true;
         } else {
             ++it;
         }
