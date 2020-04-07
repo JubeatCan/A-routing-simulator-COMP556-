@@ -173,10 +173,20 @@ void RoutingProtocolImpl::recvDVPacket(u_short port, char * packet, u_short size
     // TODO
     bool flag = false;
     u_short fromId = ntohs(*(u_short *)(packet + 4));
-    vector<pair<u_short, u_short>> destCostPair;
+    unordered_map<u_short, u_short> destCostPair;
     for (int i = 0; i < (size-8)/4; i++) {
-        destCostPair.push_back(make_pair((ntohs(*(u_short *)(packet + 8 + i*4))), 
-                        (ntohs(*(u_short *)(packet + 8 + i*4 + 2)))));
+        destCostPair[(ntohs(*(u_short *)(packet + 8 + i*4)))] =  
+                        (ntohs(*(u_short *)(packet + 8 + i*4 + 2)));
+    }
+
+    auto it = dv.DV_table.begin();
+    while (it != dv.DV_table.end()) {
+        if (it->second.next_hop == fromId && destCostPair.find(it->first) == destCostPair.end()) {
+            it = dv.DV_table.erase(it);
+            dv.forwarding_table.erase(it->first);
+        } else {
+            ++it;
+        }
     }
 
     for (auto& p : destCostPair) {
@@ -193,11 +203,13 @@ void RoutingProtocolImpl::recvDVPacket(u_short port, char * packet, u_short size
         }
     }
     
-    auto it = dv.DV_table.begin();
+    it = dv.DV_table.begin();
     while (it != dv.DV_table.end()) {
         it->second.TTL = DV_TTL;
         ++it;
     }
+
+
 
     if (flag) {
         sendDVEntriesToNeighbors();
