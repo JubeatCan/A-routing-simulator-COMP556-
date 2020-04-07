@@ -3,6 +3,7 @@
 
 #include <arpa/inet.h>
 #include "DVProtocol.h"
+#include <iostream>
 
 bool DVProtocol::update_DV_table_new_neighborcost(u_short neighbor_id, u_short prev, u_short cost) {
     u_short infcost = 0xffff;
@@ -40,6 +41,11 @@ bool DVProtocol::update_DV_table_new_neighborcost(u_short neighbor_id, u_short p
             }
         }
     }
+    
+    for (auto& it:forwarding_table) {
+        std::cout << it.first << " " << it.second << std::endl;
+    }
+    std::cout << std::endl;
 
     return flag;
 }
