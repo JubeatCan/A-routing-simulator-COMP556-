@@ -161,7 +161,9 @@ void RoutingProtocolImpl::recvPongPacket(u_short port, char * packet, u_short si
 
     // TODO: update DV/LS structure if necessary
     if (protocol_type == P_DV) {
-        dv.update_DV_table_new_neighborcost(neighbor_id, prev, cost);
+        if (dv.update_DV_table_new_neighborcost(neighbor_id, prev, cost)) {
+            sendDVEntriesToNeighbors();
+        }
     } else if (protocol_type == P_LS) {
         // TODO: LS
     }
@@ -169,6 +171,7 @@ void RoutingProtocolImpl::recvPongPacket(u_short port, char * packet, u_short si
 
 void RoutingProtocolImpl::recvDVPacket(u_short port, char * packet, u_short size) {
     // TODO
+    bool flag = false;
     u_short fromId = ntohs(*(u_short *)(packet + 4));
     vector<pair<u_short, u_short>> destCostPair;
     for (int i = 0; i < (size-8)/4; i++) {
@@ -182,14 +185,17 @@ void RoutingProtocolImpl::recvDVPacket(u_short port, char * packet, u_short size
         }
 
         if (dv.DV_table.find(p.first) == dv.DV_table.end()) {
-            dv.update_DV_table_pack(p.first, fromId, dv.DV_table[fromId].cost + p.second);
+            flag = dv.update_DV_table_pack(p.first, fromId, dv.DV_table[fromId].cost + p.second);
         } else {
             if (dv.DV_table[p.first].cost > dv.DV_table[fromId].cost + p.second) {
-                dv.update_DV_table_pack(p.first, fromId, dv.DV_table[fromId].cost + p.second);
+                flag = dv.update_DV_table_pack(p.first, fromId, dv.DV_table[fromId].cost + p.second);
             }
         }
     }
-
+    
+    if (flag) {
+        sendDVEntriesToNeighbors();
+    }
 }
 
 void RoutingProtocolImpl::recvLSPacket(u_short port, char * packet, u_short size) {
@@ -212,6 +218,7 @@ void RoutingProtocolImpl::sendPingToAllPorts() {
 void RoutingProtocolImpl::checkTableEntries() {
     // TODO: decrease TTL for each entry by 1, if TTL == 0, remove that entry
     // TODO: unpdate DV/LS table if necessary
+    bool flag = false;
     std::unordered_map <unsigned short, port_table_entry>::iterator it = port_table.begin();
     while (it != port_table.end()) {
         it->second.TTL--;
@@ -219,7 +226,7 @@ void RoutingProtocolImpl::checkTableEntries() {
         // if TTL is 0 now.
         if (it->second.TTL == 0) {
             // Update our DV first.
-            dv.update_DV_table_new_neighborcost(it->first, it->second.cost, INFINITY_COST);
+            flag = dv.update_DV_table_new_neighborcost(it->first, it->second.cost, INFINITY_COST);
             // Then remove this entry.
             it = port_table.erase(it);
         } else {
@@ -228,7 +235,11 @@ void RoutingProtocolImpl::checkTableEntries() {
     }
 
     // DV TTL Update
-    dv.update_DV_ttl();
+    flag = (dv.update_DV_ttl() || flag);
+
+    if (flag) {
+        sendDVEntriesToNeighbors();
+    }
 
 }
 

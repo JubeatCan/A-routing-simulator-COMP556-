@@ -22,8 +22,8 @@ public:
 
 
     bool update_DV_table_new_neighborcost(u_short neighbor_id, u_short prev, u_short cost);
-    void update_DV_ttl();
-    void update_DV_table_pack(u_short dest, u_short next, u_short cost);
+    bool update_DV_ttl();
+    bool update_DV_table_pack(u_short dest, u_short next, u_short cost);
 
     // store the router_id for itself
     unsigned short router_id;
