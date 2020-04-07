@@ -193,6 +193,12 @@ void RoutingProtocolImpl::recvDVPacket(u_short port, char * packet, u_short size
         }
     }
     
+    auto it = dv.DV_table.begin();
+    while (it != dv.DV_table.end()) {
+        it->second.TTL = DV_TTL;
+        ++it;
+    }
+
     if (flag) {
         sendDVEntriesToNeighbors();
     }
