@@ -179,15 +179,7 @@ void RoutingProtocolImpl::recvDVPacket(u_short port, char * packet, u_short size
                         (ntohs(*(u_short *)(packet + 8 + i*4 + 2)));
     }
 
-    auto it = dv.DV_table.begin();
-    while (it != dv.DV_table.end()) {
-        if (it->second.next_hop == fromId && destCostPair.find(it->first) == destCostPair.end()) {
-            dv.forwarding_table.erase(it->first);
-            it = dv.DV_table.erase(it);
-        } else {
-            ++it;
-        }
-    }
+    
 
     for (auto& p : destCostPair) {
         if (p.first == router_id) {
@@ -203,10 +195,20 @@ void RoutingProtocolImpl::recvDVPacket(u_short port, char * packet, u_short size
         }
     }
     
-    it = dv.DV_table.begin();
+    auto it = dv.DV_table.begin();
     while (it != dv.DV_table.end()) {
-        it->second.TTL = DV_TTL;
-        ++it;
+        if (it->second.next_hop == fromId && destCostPair.find(it->first) == destCostPair.end() && it->first != fromId) {
+            dv.forwarding_table.erase(it->first);
+            it = dv.DV_table.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    auto it2 = dv.DV_table.begin();
+    while (it2 != dv.DV_table.end()) {
+        it2->second.TTL = DV_TTL;
+        ++it2;
     }
 
 
