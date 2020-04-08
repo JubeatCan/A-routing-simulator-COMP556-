@@ -4,8 +4,10 @@
 #include <arpa/inet.h>
 #include "DVProtocol.h"
 #include <iostream>
+#include <unordered_map>
+#include <set>
 
-bool DVProtocol::update_DV_table_new_neighborcost(u_short neighbor_id, u_short prev, u_short cost) {
+bool DVProtocol::update_DV_table_new_neighborcost(u_short neighbor_id, u_short prev, u_short cost, std::unordered_map <unsigned short, port_table_entry>& port) {
     std::cout<< router_id << ": "<< neighbor_id << "; " << prev << "; "<< cost << std::endl;
     for (auto &it: DV_table) {
         std::cout<< it.first << " DV: " << it.second.cost<< std::endl;
@@ -24,13 +26,21 @@ bool DVProtocol::update_DV_table_new_neighborcost(u_short neighbor_id, u_short p
     } else if (DV_table.find(neighbor_id) != DV_table.end() && (prev != cost)) {
         if (cost == infcost) {
             auto it = DV_table.begin();
+            std::set<u_short> dest;
             while (it != DV_table.end()) {
                 if (it->second.next_hop == neighbor_id) {
                     forwarding_table.erase(it->first);
+                    dest.insert(it->first);
                     it = DV_table.erase(it);
                     flag = true;
                 } else {
                     ++it;
+                }
+            }
+
+            for (u_short i : dest) {
+                if (port.find(i) != port.end()) {
+                    update_DV_table_pack(i, i, port[i].cost);
                 }
             }
         } else {

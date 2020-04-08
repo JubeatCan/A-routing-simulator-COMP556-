@@ -26,12 +26,6 @@ enum eAlarmType {
     PRINT,
 };
 
-struct port_table_entry {
-    unsigned short port;    // port num to connect
-    unsigned short cost;    // RTT btw two routers
-    unsigned short TTL;     // time to live
-};
-
 
 class RoutingProtocolImpl : public RoutingProtocol {
   public:

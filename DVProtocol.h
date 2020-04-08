@@ -11,6 +11,11 @@ struct DV_table_entry {
   unsigned short TTL;       // time to live
 };
 
+struct port_table_entry {
+    unsigned short port;    // port num to connect
+    unsigned short cost;    // RTT btw two routers
+    unsigned short TTL;     // time to live
+};
 
 class DVProtocol {
 public:
@@ -21,7 +26,7 @@ public:
     ~DVProtocol() {}
 
 
-    bool update_DV_table_new_neighborcost(u_short neighbor_id, u_short prev, u_short cost);
+    bool update_DV_table_new_neighborcost(u_short neighbor_id, u_short prev, u_short cost, std::unordered_map <unsigned short, port_table_entry>& port);
     bool update_DV_ttl();
     bool update_DV_table_pack(u_short dest, u_short next, u_short cost);
 

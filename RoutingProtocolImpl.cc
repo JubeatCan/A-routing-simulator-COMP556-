@@ -170,7 +170,7 @@ void RoutingProtocolImpl::recvPongPacket(u_short port, char * packet, u_short si
 
     // TODO: update DV/LS structure if necessary
     if (protocol_type == P_DV) {
-        if (dv.update_DV_table_new_neighborcost(neighbor_id, prev, cost)) {
+        if (dv.update_DV_table_new_neighborcost(neighbor_id, prev, cost, port_table)) {
             sendDVEntriesToNeighbors();
         }
     } else if (protocol_type == P_LS) {
@@ -209,7 +209,7 @@ void RoutingProtocolImpl::recvDVPacket(u_short port, char * packet, u_short size
     
 
     auto it = dv.DV_table.begin();
-    set<int> destErase;
+    set<u_short> destErase;
     while (it != dv.DV_table.end()) {
         if (it->second.next_hop == fromId && destCostPair.find(it->first) == destCostPair.end() && it->first != fromId) {
             dv.forwarding_table.erase(it->first);
@@ -221,7 +221,7 @@ void RoutingProtocolImpl::recvDVPacket(u_short port, char * packet, u_short size
         }
     }
 
-    for (int i : destErase) {
+    for (u_short i : destErase) {
         if (port_table.find(i) != port_table.end()) {
             dv.update_DV_table_pack(i, i, port_table[i].cost);
             flag = true;
@@ -271,13 +271,16 @@ void RoutingProtocolImpl::checkTableEntries() {
         if (it->second.TTL == 0) {
             // Update our DV first.
             // flag = dv.update_DV_table_new_neighborcost(it->first, it->second.cost, INFINITY_COST);
+            u_short dest = it->first, prev = it->second.cost;
+            it = port_table.erase(it);
+            
             if (flag) {
-                dv.update_DV_table_new_neighborcost(it->first, it->second.cost, INFINITY_COST);
+                dv.update_DV_table_new_neighborcost(dest, prev, INFINITY_COST, port_table);
             } else {
-                flag = dv.update_DV_table_new_neighborcost(it->first, it->second.cost, INFINITY_COST);
+                flag = dv.update_DV_table_new_neighborcost(dest, prev, INFINITY_COST, port_table);
             }
             // Then remove this entry.
-            it = port_table.erase(it);
+            // it = port_table.erase(it);
         } else {
             ++it;
         }
