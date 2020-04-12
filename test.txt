@@ -1,0 +1,12 @@
+Test Strategy:
+We are trying to cover all the situation and make the network as complex as possible to test our 
+protocol mechanisms. Therefore, we are trying to printout the DV/LS forwarding table and port table 
+to make sure the update after linkdying and linkreconnect works well.
+
+myTest1:
+Just like the LS example on the lecture.
+We add several dying and reconnecting to it.
+
+myTest2:
+Just like the DV example on the lecture.
+We add several dying and reconnecting to it.
