@@ -26,18 +26,16 @@ void LSProtocol::sendLSPackets() {
     uint16_t size = port_table->size() * 4 + 3 * 4;
     
     // for all avaliable ports
-    bool isAvaliable = false;
     // if(router_id == 1){
-    std::cout << "this router id: " <<  router_id << std::endl;
-    for (auto it : (*port_table)){
-        std::cout << "neigbhor id: " << it.first << std::endl;
-    }
+    // std::cout << "this router id: " <<  router_id << std::endl;
+    // for (auto it : (*port_table)){
+    //     std::cout << "neigbhor id: " << it.first << std::endl;
+    // }
     for (uint16_t i = 0; i < num_ports; i++){
-        uint16_t id;
+        bool isAvaliable = false;
         for (auto &it : (*port_table)){
             if(it.second.port == i){
                 isAvaliable = true;
-                id = it.first;
                 break;
             }
         }
@@ -56,7 +54,7 @@ void LSProtocol::sendLSPackets() {
                 *(uint16_t *)(sendBuffer + 14 + offset * 4) = htons(it.second.cost);
                 offset++;
             }
-            std::cout << "send to router: " << id << std::endl;
+            // std::cout << "send to router: " << id << std::endl;
             sys->send(i, sendBuffer, size);
         }
     }
@@ -133,8 +131,8 @@ void LSProtocol::handleLSPacket(uint16_t port, char * packet, uint16_t size){
     dijkstra();
 
     // now dispatch this packet to all other neighbors except where it comes from
-    bool isAvaliable = false;
     for (uint16_t i = 0; i < num_ports; i++){
+        bool isAvaliable = false;
         for (auto &it : *port_table){
             if(it.second.port == i && it.second.port != port){
                 isAvaliable = true;
