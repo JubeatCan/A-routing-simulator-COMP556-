@@ -36,9 +36,11 @@ void RoutingProtocolImpl::init(unsigned short num_ports, unsigned short router_i
 
     else if (protocol_type == P_LS) {
         // TODO: add LS protocol later
+        ls = LSProtocol(router_id, num_ports, sys, &port_table);
+        sys->set_alarm(this, UPDATE_FREQ, &ls_update);
     }
 
-    sys->set_alarm(this, 10000, &print_tables);
+    // sys->set_alarm(this, 10000, &print_tables);
 
 }
 
@@ -67,7 +69,7 @@ void RoutingProtocolImpl::handle_alarm(void *data) {
         
         case ALARM_LS_UPDATE:
             /* send all LS entries to all neighbors */
-            sendLSEntriesToNeighbors();
+            ls.sendLSPackets();
             sys->set_alarm(this, UPDATE_FREQ, data);
             break;
         
@@ -138,8 +140,15 @@ void RoutingProtocolImpl::forwardData(u_short port, char * packet, u_short size)
     }
     
     else if (protocol_type == P_LS) {
-        // TODO: add LS handler
-
+        // if find an entry for the dest in forwarding table, send out use the nextHop
+        if (ls.forwarding_table.find(dest) != ls.forwarding_table.end()) {
+            u_short nextHop = ls.forwarding_table[dest];
+            sys->send(port_table[nextHop].port, packet, size);
+        }
+        // if no entry found, free the packet
+        else {
+            free(packet);
+        }
     }
 
 }
@@ -174,7 +183,7 @@ void RoutingProtocolImpl::recvPongPacket(u_short port, char * packet, u_short si
             sendDVEntriesToNeighbors();
         }
     } else if (protocol_type == P_LS) {
-        // TODO: LS
+        ls.handlePongPacket(neighbor_id, prev, cost, port);
     }
 }
 
@@ -243,7 +252,7 @@ void RoutingProtocolImpl::recvDVPacket(u_short port, char * packet, u_short size
 }
 
 void RoutingProtocolImpl::recvLSPacket(u_short port, char * packet, u_short size) {
-    // TODO
+    ls.handleLSPacket(port, packet, size);
 }
 
 void RoutingProtocolImpl::sendPingToAllPorts() {
@@ -262,42 +271,46 @@ void RoutingProtocolImpl::sendPingToAllPorts() {
 void RoutingProtocolImpl::checkTableEntries() {
     // TODO: decrease TTL for each entry by 1, if TTL == 0, remove that entry
     // TODO: unpdate DV/LS table if necessary
-    bool flag = false;
-    std::unordered_map <unsigned short, port_table_entry>::iterator it = port_table.begin();
-    while (it != port_table.end()) {
-        it->second.TTL--;
+    if(protocol_type == P_DV){
+        bool flag = false;
+        std::unordered_map <unsigned short, port_table_entry>::iterator it = port_table.begin();
+        while (it != port_table.end()) {
+            it->second.TTL--;
 
-        // if TTL is 0 now.
-        if (it->second.TTL == 0) {
-            // Update our DV first.
-            // flag = dv.update_DV_table_new_neighborcost(it->first, it->second.cost, INFINITY_COST);
-            u_short dest = it->first, prev = it->second.cost;
-            it = port_table.erase(it);
-            
-            if (flag) {
-                dv.update_DV_table_new_neighborcost(dest, prev, INFINITY_COST, port_table);
+            // if TTL is 0 now.
+            if (it->second.TTL == 0) {
+                // Update our DV first.
+                // flag = dv.update_DV_table_new_neighborcost(it->first, it->second.cost, INFINITY_COST);
+                u_short dest = it->first, prev = it->second.cost;
+                it = port_table.erase(it);
+                
+                if (flag) {
+                    dv.update_DV_table_new_neighborcost(dest, prev, INFINITY_COST, port_table);
+                } else {
+                    flag = dv.update_DV_table_new_neighborcost(dest, prev, INFINITY_COST, port_table);
+                }
+                // Then remove this entry.
+                // it = port_table.erase(it);
             } else {
-                flag = dv.update_DV_table_new_neighborcost(dest, prev, INFINITY_COST, port_table);
+                ++it;
             }
-            // Then remove this entry.
-            // it = port_table.erase(it);
-        } else {
-            ++it;
         }
-    }
 
-    // DV TTL Update
-    // flag = (dv.update_DV_ttl() || flag);
-    if (flag) {
-        dv.update_DV_ttl();
-    } else {
-        flag = dv.update_DV_ttl();
-    }
+        // DV TTL Update
+        // flag = (dv.update_DV_ttl() || flag);
+        if (flag) {
+            dv.update_DV_ttl();
+        } else {
+            flag = dv.update_DV_ttl();
+        }
 
-    if (flag) {
-        sendDVEntriesToNeighbors();
+        if (flag) {
+            sendDVEntriesToNeighbors();
+        }
+    } else if(protocol_type == P_LS){
+        ls.checkEntriesTTL();
     }
-
+    
 }
 
 void RoutingProtocolImpl::sendDVEntriesToNeighbors() {
@@ -337,19 +350,31 @@ void RoutingProtocolImpl::sendDVEntriesToNeighbors() {
 
 }
 
+// send LSP to all its neigbors
+// void RoutingProtocolImpl::sendLSPacket() {
+//     uint16_t size = port_table.size() * 4 + 3 * 4;
+    
+//     for (auto &p : port_table){
+//         uint16_t neighbor = p.first;
 
-void RoutingProtocolImpl::sendLSEntriesToNeighbors() {
-    // TODO
-}
+//         p.second
+//     }
+// }
 
 void RoutingProtocolImpl::printTables() {
     for(auto & it: port_table) {
         std::cout<< "PT: " << it.first << ": " << it.second.cost << std::endl;
     }
 
-    for (auto & it: dv.DV_table) {
-        std::cout<< "DV: " << it.first << ": " << it.second.next_hop << ", "<< it.second.cost << std::endl;
+    // for (auto & it: dv.DV_table) {
+    //     std::cout<< "DV: " << it.first << ": " << it.second.next_hop << ", "<< it.second.cost << std::endl;
         
-    }
+    // }
+    
+    // for (auto &it: ls.ls_table){
+    //     for (auto &e: ls.ls_table[it.first]){
+    //         std::cout << it.first << " -> " << e.first << " " << e.second.TTL << std::endl;
+    //     }
+    // }
 
 }

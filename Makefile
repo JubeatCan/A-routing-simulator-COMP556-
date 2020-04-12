@@ -8,7 +8,8 @@ OBJS =\
 	Node.o\
 	RoutingProtocolImpl.o\
 	Simulator.o\
-	DVProtocol.o
+	DVProtocol.o\
+	LSProtocol.o
 
 HEADRES =\
 	global.h\
@@ -17,7 +18,9 @@ HEADRES =\
 	Node.h\
 	RoutingProtocol.h\
 	Simulator.h\
-	DVProtocol.h
+	DVProtocol.h\
+	LSProtocol.h\
+	commons.h
 
 %.o: %.cc
 	$(CC) $(COPTS) -c $< -o $@
@@ -34,6 +37,7 @@ Node.o: Event.h Link.h Node.h Simulator.h
 Simulator.o: Event.h Link.h Node.h RoutingProtocol.h Simulator.h 
 RoutingProtocolImpl.o: RoutingProtocolImpl.h
 DVProtocol.o: DVProtocol.h
+LSProtocol.o: LSProtocol.h
 
 clean:
 	rm -f *.o Simulator

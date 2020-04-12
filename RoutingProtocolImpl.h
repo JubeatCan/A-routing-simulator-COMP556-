@@ -3,6 +3,7 @@
 
 #include "RoutingProtocol.h"
 #include "DVProtocol.h"
+#include "LSProtocol.h"
 #include <unordered_map>
 
 #define PORT_ENTRY_LIVE 15  // seconds
@@ -79,7 +80,8 @@ class RoutingProtocolImpl : public RoutingProtocol {
 
     DVProtocol dv;
     // TODO: add LS protocol later
-
+    LSProtocol ls;
+    
     // port status table(track neighbor status): key = neighborID, value = entry
     std::unordered_map <unsigned short, port_table_entry> port_table;
 
@@ -115,8 +117,8 @@ class RoutingProtocolImpl : public RoutingProtocol {
     // send all DV entries to all neighbors
     void sendDVEntriesToNeighbors();
 
-    // send all LS entries to all neighbors
-    void sendLSEntriesToNeighbors();
+    // send LSP to all its neigbors
+    // void sendLSPacket();
 
 
     void printTables();
