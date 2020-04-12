@@ -152,6 +152,9 @@ void LSProtocol::handleLSPacket(uint16_t port, char * packet, uint16_t size){
 void LSProtocol::checkEntriesTTL(){
     bool hasNabrChanged = false;
     std::unordered_map <unsigned short, port_table_entry>::iterator it = port_table->begin();
+    // for (auto it : (*port_table)){
+    //     std::cout << "neighbor id: " << it.first << " TTL: " << it.second.TTL << std::endl;
+    // }
     while(it != port_table->end()){
         it->second.TTL--;
 
@@ -234,10 +237,12 @@ bool LSProtocol::update_LS_TTL(){
 }
 
 void LSProtocol::dijkstra(){
-    if(port_table->empty())
-        return;
-    
     forwarding_table.clear();
+
+    if(port_table->empty()){
+        return;
+    }
+    
     // pair: <dest_id, cost>
     auto comparator = [](pair<uint16_t, uint16_t> lhs, pair<uint16_t, uint16_t> rhs) {
         return lhs.second > rhs.second;
@@ -249,6 +254,12 @@ void LSProtocol::dijkstra(){
     std::unordered_map<uint16_t, edge> resultMap;
 
     std::unordered_map<uint16_t, bool> hasVisited;
+
+    // std::cout << "destinations" << std::endl;
+    // for (auto e : destinations){
+    //     std::cout << e << " ";
+    // }
+    // std::cout << std::endl;
 
     // initialize resultMap
     for (auto dest_id : destinations){
@@ -294,9 +305,16 @@ void LSProtocol::dijkstra(){
 }
 
 void LSProtocol::print_table(){
-    std::cout << "forwarding table: from -> nextHop" << std::endl;
+    std::cout << "forwarding table: dest -> nextHop" << std::endl;
     for (auto it : forwarding_table){
         std::cout << it.first << " -> " << it.second << std::endl;
+    }
+
+    std::cout << "ls_table: " << std::endl;
+    for (auto it : ls_table){
+        for (auto e : ls_table[it.first]){
+            std::cout << it.first << " -> " << e.first << " TTL: " <<  e.second.TTL << std::endl;
+        }
     }
 }
 
