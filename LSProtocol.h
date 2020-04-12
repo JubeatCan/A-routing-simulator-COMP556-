@@ -37,8 +37,7 @@ public:
 
     void update_dests(uint16_t erase_id);
 
-    // forwarding table: key = router_id/dest_id, value = next_hop_id
-    std::unordered_map<unsigned short, unsigned short> forwarding_table;
+    void print_table();
 
 private:
     friend class RoutingProtocolImpl;
@@ -62,6 +61,9 @@ private:
     // LS graph table: source_id -> map<dest_id, entry>
     std::unordered_map<uint16_t, std::unordered_map<uint16_t, ls_table_entry>> ls_table;
 
+    // forwarding table: key = router_id/dest_id, value = next_hop_id
+    std::unordered_map<unsigned short, unsigned short> forwarding_table;
+    
     // all known destinations
     std::list<uint16_t> destinations;
 };

@@ -150,19 +150,20 @@ void LSProtocol::handleLSPacket(uint16_t port, char * packet, uint16_t size){
 }
 
 void LSProtocol::checkEntriesTTL(){
-    bool hasChanged = false;
+    bool hasNabrChanged = false;
     std::unordered_map <unsigned short, port_table_entry>::iterator it = port_table->begin();
     while(it != port_table->end()){
         it->second.TTL--;
 
         if(it->second.TTL == 0){
-            hasChanged = true;
-            it = port_table->erase(it);
-            // update the graph
+            hasNabrChanged = true;
             uint16_t erase_id = it->first;
+            it = port_table->erase(it);
+
+            // update the graph
             ls_table[router_id].erase(erase_id);
             ls_table[erase_id].erase(router_id);
-            
+
             // if none of nodes can reach erase_id node for now
             if(ls_table[erase_id].size() == 0){
                 // erase this dest in destinations
@@ -175,10 +176,10 @@ void LSProtocol::checkEntriesTTL(){
     }
 
     // check timeout for ls_table
-    hasChanged = update_LS_TTL();
+    bool hasLSChanged = update_LS_TTL();
 
     // recompute shortest path
-    if(hasChanged){
+    if(hasNabrChanged || hasLSChanged){
         dijkstra();
         sendLSPackets();
     }
@@ -289,6 +290,13 @@ void LSProtocol::dijkstra(){
         }
         
         forwarding_table[dest_id] = temp_id;
+    }
+}
+
+void LSProtocol::print_table(){
+    std::cout << "forwarding table: from -> nextHop" << std::endl;
+    for (auto it : forwarding_table){
+        std::cout << it.first << " -> " << it.second << std::endl;
     }
 }
 
