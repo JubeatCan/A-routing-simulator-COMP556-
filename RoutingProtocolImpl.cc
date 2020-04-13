@@ -40,7 +40,7 @@ void RoutingProtocolImpl::init(unsigned short num_ports, unsigned short router_i
         sys->set_alarm(this, UPDATE_FREQ, &ls_update);
     }
 
-    sys->set_alarm(this, 7000, &print_tables);
+    // sys->set_alarm(this, 11000, &print_tables);
 
 }
 

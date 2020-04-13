@@ -26,11 +26,6 @@ void LSProtocol::sendLSPackets() {
     uint16_t size = port_table->size() * 4 + 3 * 4;
     
     // for all avaliable ports
-    // if(router_id == 1){
-    // std::cout << "this router id: " <<  router_id << std::endl;
-    // for (auto it : (*port_table)){
-    //     std::cout << "neigbhor id: " << it.first << std::endl;
-    // }
     for (uint16_t i = 0; i < num_ports; i++){
         bool isAvaliable = false;
         for (auto &it : (*port_table)){
@@ -71,16 +66,13 @@ void LSProtocol::handlePongPacket(uint16_t neighbor_id, uint16_t prev, uint16_t 
     // New neighbor
     if(prev == INFINITY_COST){
         // if not in the graph
-        // if(ls_table.find(neighbor_id) == ls_table.end()){
-        //     // insert this neighbor to graph
-        //     ls_table[router_id][neighbor_id] = {port, cost, LS_TTL};
-        //     ls_table[neighbor_id][router_id] = {port, cost, LS_TTL};
-        // }
-        // insert this neighbor to the graph
+        if(ls_table.count(neighbor_id) == 0){
+            destinations.push_back(neighbor_id);
+        }
+
+        // insert/update this neighbor to the graph
         ls_table[router_id][neighbor_id] = {cost, LS_TTL};
         ls_table[neighbor_id][router_id] = {cost, LS_TTL};
-
-        destinations.push_back(neighbor_id);
     }
     else{
         // in graph, new link cost: prev != cost
@@ -99,8 +91,13 @@ void LSProtocol::handleLSPacket(uint16_t port, char * packet, uint16_t size){
     uint32_t source_seqNum = ntohl(*(uint32_t *)(packet + 8));
 
     // check if this source_seqNum is the latest
-    if(seqNum_map.count(source_seqNum) && seqNum_map[source_id] >= source_seqNum){
+    if(seqNum_map.count(source_id) && seqNum_map[source_id] >= source_seqNum){
         return;
+    }
+
+    // if never seen this node, add to destinations
+    if(ls_table.count(source_id) == 0){
+        destinations.push_back(source_id);
     }
 
     // update the seqNum for source_id
@@ -114,17 +111,35 @@ void LSProtocol::handleLSPacket(uint16_t port, char * packet, uint16_t size){
         uint16_t entry_cost = ntohs(*(uint16_t *)(packet + 14 + offset * 4));
         offset++;
         mapEntries[entry_id] = entry_cost;
-
+        
+        if(ls_table.count(entry_id) == 0){
+            destinations.push_back(entry_id);
+        }
         // update the graph
         ls_table[source_id][entry_id] = {entry_cost, LS_TTL};
         ls_table[entry_id][source_id] = {entry_cost, LS_TTL};
     }
 
     // delete dying links
-    for (auto it : ls_table[source_id]){
-        if(mapEntries.find(it.first) == mapEntries.end()){
-            ls_table[source_id].erase(it.first);
-            ls_table[it.first].erase(source_id);
+    std::unordered_map<uint16_t, ls_table_entry>::iterator it = ls_table[source_id].begin();
+    while(it != ls_table[source_id].end()){
+        uint16_t neighbor_id = it->first;
+        if(mapEntries.find(neighbor_id) == mapEntries.end()){
+            it = ls_table[source_id].erase(it);
+            ls_table[neighbor_id].erase(source_id);
+
+            if(ls_table[source_id].size() == 0){
+                // erase this node in destinations
+                update_dests(source_id);
+            }
+
+            if(ls_table[neighbor_id].size() == 0){
+                 // erase this node in destinations
+                update_dests(neighbor_id);
+            }
+        }
+        else{
+            ++it;
         }
     }
 
@@ -255,12 +270,6 @@ void LSProtocol::dijkstra(){
 
     std::unordered_map<uint16_t, bool> hasVisited;
 
-    // std::cout << "destinations" << std::endl;
-    // for (auto e : destinations){
-    //     std::cout << e << " ";
-    // }
-    // std::cout << std::endl;
-
     // initialize resultMap
     for (auto dest_id : destinations){
         resultMap[dest_id] = {router_id, INFINITY_COST};
@@ -288,6 +297,7 @@ void LSProtocol::dijkstra(){
 
             if(resultMap[adjNode_id].cost > resultMap[curNode_id].cost + direct_cost){
                 resultMap[adjNode_id].cost = resultMap[curNode_id].cost + direct_cost;
+                resultMap[adjNode_id].prev_id = curNode_id;
                 pqueue.push(make_pair(adjNode_id, resultMap[adjNode_id].cost));
             }
         }
